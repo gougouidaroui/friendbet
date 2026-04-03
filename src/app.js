@@ -304,8 +304,18 @@ async function loadStreakData() {
   try {
     const { user } = getState();
     if (!user) return;
-    const streak = await getStreakData();
-    updateStreak(streak);
+    const raw = await getStreakData();
+    if (!raw) return;
+    updateStreak({
+      login_streak: raw.out_login_streak,
+      penguin_stage: raw.out_penguin_stage,
+      win_streak: raw.out_win_streak,
+      best_win_streak: raw.out_best_win_streak,
+      trophy_level: raw.out_trophy_level,
+      rescues_remaining: raw.out_rescues_remaining,
+      streak_in_danger: raw.out_streak_in_danger,
+      days_to_next_stage: raw.out_days_to_next_stage,
+    });
   } catch (e) {
     console.log('Could not load streak data');
   }
@@ -317,13 +327,14 @@ function setupStreakRealtime() {
   
   subscribeToStreakChanges(user.id, (newProfile) => {
     updateStreak({
-      login_streak: newProfile.login_streak,
-      penguin_stage: newProfile.penguin_stage,
-      win_streak: newProfile.win_streak,
-      best_win_streak: newProfile.best_win_streak,
-      trophy_level: newProfile.trophy_level,
-      rescues_remaining: newProfile.rescues_remaining,
-      streak_in_danger: newProfile.streak_in_danger,
+      login_streak: newProfile.out_login_streak ?? newProfile.login_streak,
+      penguin_stage: newProfile.out_penguin_stage ?? newProfile.penguin_stage,
+      win_streak: newProfile.out_win_streak ?? newProfile.win_streak,
+      best_win_streak: newProfile.out_best_win_streak ?? newProfile.best_win_streak,
+      trophy_level: newProfile.out_trophy_level ?? newProfile.trophy_level,
+      rescues_remaining: newProfile.out_rescues_remaining ?? newProfile.rescues_remaining,
+      streak_in_danger: newProfile.out_streak_in_danger ?? newProfile.streak_in_danger,
+      days_to_next_stage: newProfile.out_days_to_next_stage ?? newProfile.days_to_next_stage,
     });
   });
 }
