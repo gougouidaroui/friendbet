@@ -67,3 +67,7 @@ export function updateStreak(streak) {
 export function setAppLoading(loading) {
   updateState({ appLoading: loading });
 }
+
+export function setAppLoadingSilent(loading) {
+  state.appLoading = loading;
+}
