@@ -927,7 +927,13 @@ body::before {
   z-index: 1000;
   padding: var(--spacing-4);
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   animation: fadeIn 0.15s ease;
+}
+
+.modal-overlay::-webkit-scrollbar {
+  display: none;
 }
 
 .modal-overlay.active {
@@ -947,6 +953,12 @@ body::before {
   overflow-y: auto;
   animation: scaleIn 0.25s ease;
   position: relative;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal-content::-webkit-scrollbar {
+  display: none;
 }
 
 .modal-content::before {
