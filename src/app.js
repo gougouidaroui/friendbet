@@ -1,4 +1,4 @@
-import { getState, subscribe, updateUser, setLoading, updateStreak, updateStateSilent } from './lib/store.js';
+import { getState, subscribe, updateUser, setLoading, updateStreak, updateStateSilent, setAppLoading } from './lib/store.js';
 import { removeAll, has, registerChannel } from './lib/subscriptions.js';
 import { onAuthStateChange, loadProfile } from './services/auth.js';
 import { getBets, getDrafts, deleteBet, subscribeToBets, getBet, placeWager as placeWagerService } from './services/bets.js';
@@ -27,8 +27,10 @@ export function initApp(element) {
   
   onAuthStateChange(async (event, session) => {
     if ((event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') && session?.user) {
+      setLoading(false);
       const profile = await loadProfile(session.user);
       updateUser(session.user, profile);
+      setAppLoading(true);
     } else if (event === 'SIGNED_OUT') {
       removeAll();
       updateUser(null, null);
@@ -39,7 +41,7 @@ export function initApp(element) {
 }
 
 function render() {
-  const { user, profile, loading } = getState();
+  const { user, profile, loading, appLoading } = getState();
   
   if (loading) {
     appElement.innerHTML = '<div class="loader"></div>';
@@ -61,6 +63,7 @@ function render() {
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
+      ${appLoading ? '<div class="app-loading-overlay"><div class="loader"></div></div>' : ''}
     </div>
     ${renderBetModal()}
     ${renderWinnerModal()}
@@ -85,7 +88,9 @@ function render() {
   
   document.getElementById('createBetBtn').onclick = () => openBetModal(null, loadCurrentTab);
   
-  loadCurrentTab();
+  loadCurrentTab().finally(() => {
+    setAppLoading(false);
+  });
   
   setupSubscriptions();
 }
@@ -221,7 +226,8 @@ function attachBetCardListeners() {
         const { publishBet } = await import('./services/bets.js');
         await publishBet(betId);
         const profile = await loadProfile(user);
-        updateUser(user, profile);
+        updateStateSilent({ profile });
+        updateHeader();
         loadCurrentTab();
       } catch (error) {
         alert(error.message || 'Failed to publish bet');
@@ -257,7 +263,8 @@ function attachBetCardListeners() {
         const { loadProfile } = await import('./services/auth.js');
         await placeWager(betId, user.id, side, wagerAmount);
         const profile = await loadProfile(user);
-        updateUser(user, profile);
+        updateStateSilent({ profile });
+        updateHeader();
         loadCurrentTab();
       } catch (error) {
         alert(error.message || 'Failed to place wager');

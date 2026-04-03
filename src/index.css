@@ -1392,6 +1392,28 @@ body::before {
   animation: spin 0.8s linear infinite;
 }
 
+/* ─── App Loading Overlay ─── */
+
+.app-loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  z-index: 1000;
+  animation: overlayFadeOut 0.3s ease-out forwards;
+  animation-delay: 0.1s;
+  pointer-events: none;
+}
+
+@keyframes overlayFadeOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
 /* ─── Skeleton ─── */
 
 .skeleton {
