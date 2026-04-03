@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js';
+import { getStreakData } from './streaks.js';
 
 export async function signUp(email, password, username) {
   const { data, error } = await supabase.auth.signUp({
@@ -61,6 +62,23 @@ export async function loadProfile(user) {
     console.log('Daily bonus may already be processed');
     return profile;
   }
+}
+
+export async function loadProfileWithStreak(user) {
+  if (!user) {
+    return { profile: null, streak: null };
+  }
+
+  const profile = await loadProfile(user);
+  
+  let streak = null;
+  try {
+    streak = await getStreakData();
+  } catch (e) {
+    console.log('Could not load streak data on login');
+  }
+  
+  return { profile, streak };
 }
 
 export function getCurrentUser() {

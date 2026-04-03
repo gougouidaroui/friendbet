@@ -1,5 +1,6 @@
 import { getProfile } from '../services/users.js';
 import { getFriends, sendFriendRequest, removeFriend } from '../services/friends.js';
+import { getStreakData } from '../services/streaks.js';
 import { getState } from '../lib/store.js';
 
 let currentProfileId = null;
@@ -39,6 +40,15 @@ async function loadProfile(userId) {
     
     const joinDate = new Date(profile.created_at).toLocaleDateString();
     
+    let streakData = null;
+    if (isSelf) {
+      try {
+        streakData = await getStreakData();
+      } catch (e) {
+        console.log('Could not load streak data');
+      }
+    }
+    
     container.innerHTML = `
       <div class="profile-header">
         <div class="profile-avatar">${profile.username.charAt(0).toUpperCase()}</div>
@@ -54,6 +64,16 @@ async function loadProfile(userId) {
           <div class="profile-stat-value">${friends.length}</div>
           <div class="profile-stat-label">Friends</div>
         </div>
+        ${isSelf && streakData ? `
+          <div class="profile-stat">
+            <div class="profile-stat-value">${streakData.login_streak}</div>
+            <div class="profile-stat-label">Streak</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-value">${streakData.win_streak}</div>
+            <div class="profile-stat-label">Wins</div>
+          </div>
+        ` : ''}
       </div>
       ${!isSelf ? `
         <div style="margin-top: var(--spacing-6); display: flex; gap: var(--spacing-2);">

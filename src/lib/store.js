@@ -7,6 +7,7 @@ const state = {
   loading: true,
   currentTab: 'feed',
   currentFilter: 'all',
+  streak: null,
 };
 
 const subscribers = [];
@@ -52,4 +53,8 @@ export function setCurrentTab(tab) {
 
 export function setCurrentFilter(filter) {
   updateState({ currentFilter: filter });
+}
+
+export function updateStreak(streak) {
+  updateState({ streak });
 }

@@ -1,7 +1,8 @@
-import { getState, subscribe, updateUser, setLoading } from './lib/store.js';
+import { getState, subscribe, updateUser, setLoading, updateStreak } from './lib/store.js';
 import { onAuthStateChange, loadProfile } from './services/auth.js';
 import { getBets, getDrafts, deleteBet, subscribeToBets, getBet, placeWager as placeWagerService } from './services/bets.js';
 import { signOut } from './services/auth.js';
+import { getStreakData, subscribeToStreakChanges } from './services/streaks.js';
 
 import { renderAuth, attachAuthListeners } from './components/auth.js';
 import { renderHeader, updateHeader } from './components/header.js';
@@ -14,6 +15,7 @@ import { renderAdminModal, openAdminModal, attachAdminModalListeners } from './c
 import { renderProfileModal, openProfileModal, attachProfileModalListeners } from './components/profile-modal.js';
 import { renderFriendsPanel, openFriendsPanel, attachFriendsPanelListeners } from './components/friends-panel.js';
 import { renderNotificationsModal, openNotificationsModal, attachNotificationsModalListeners } from './components/notification-badge.js';
+import { renderStreakModal, openStreakModal, attachStreakModalListeners } from './components/streak-modal.js';
 
 let appElement = null;
 
@@ -65,6 +67,7 @@ function render() {
     ${renderProfileModal()}
     ${renderFriendsPanel()}
     ${renderNotificationsModal()}
+    ${renderStreakModal()}
   `;
   
   attachHeaderListeners();
@@ -76,11 +79,14 @@ function render() {
   attachProfileModalListeners();
   attachFriendsPanelListeners();
   attachNotificationsModalListeners();
+  attachStreakModalListeners();
   
   document.getElementById('createBetBtn').onclick = () => openBetModal(null, loadCurrentTab);
   
   loadCurrentTab();
+  loadStreakData();
   setupRealtime();
+  setupStreakRealtime();
 }
 
 async function loadCurrentTab() {
@@ -263,6 +269,7 @@ function attachHeaderListeners() {
   document.getElementById('headerAvatar').onclick = () => openProfileModal(user.id);
   document.querySelector('.user-info h3').onclick = () => openProfileModal(user.id);
   
+  document.getElementById('streakBtn').onclick = () => openStreakModal();
   document.getElementById('notificationsBtn').onclick = () => openNotificationsModal();
   document.getElementById('friendsBtn').onclick = () => openFriendsPanel();
   document.getElementById('historyBtn').onclick = () => openHistoryModal();
@@ -284,6 +291,34 @@ function setupRealtime() {
   return () => {
     if (channel) channel.unsubscribe();
   };
+}
+
+async function loadStreakData() {
+  try {
+    const { user } = getState();
+    if (!user) return;
+    const streak = await getStreakData();
+    updateStreak(streak);
+  } catch (e) {
+    console.log('Could not load streak data');
+  }
+}
+
+function setupStreakRealtime() {
+  const { user } = getState();
+  if (!user) return;
+  
+  subscribeToStreakChanges(user.id, (newProfile) => {
+    updateStreak({
+      login_streak: newProfile.login_streak,
+      penguin_stage: newProfile.penguin_stage,
+      win_streak: newProfile.win_streak,
+      best_win_streak: newProfile.best_win_streak,
+      trophy_level: newProfile.trophy_level,
+      rescues_remaining: newProfile.rescues_remaining,
+      streak_in_danger: newProfile.streak_in_danger,
+    });
+  });
 }
 
 export async function updateUserProfile(partial) {

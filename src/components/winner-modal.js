@@ -1,5 +1,6 @@
 import { resolveBet } from '../services/bets.js';
-import { getState } from '../lib/store.js';
+import { updateWinStreak } from '../services/streaks.js';
+import { getState, updateStreak } from '../lib/store.js';
 
 let currentBetId = null;
 let onSuccessCallback = null;

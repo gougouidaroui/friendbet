@@ -1,7 +1,17 @@
 import { getState } from '../lib/store.js';
 
+const stageIcons = [
+  `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="7" ry="9"/><path d="M10 10 Q12 8 14 10"/></svg>`,
+  `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="14" rx="5" ry="7"/><circle cx="12" cy="8" r="4"/><circle cx="10.5" cy="7.5" r="1" fill="currentColor"/><circle cx="13.5" cy="7.5" r="1" fill="currentColor"/><path d="M11 9.5 Q12 10 13 9.5"/></svg>`,
+  `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="14" rx="6" ry="8"/><circle cx="12" cy="7" r="4.5"/><circle cx="10" cy="6.5" r="1.2" fill="currentColor"/><circle cx="14" cy="6.5" r="1.2" fill="currentColor"/><path d="M10.5 8.5 Q12 9.5 13.5 8.5"/><path d="M7 10 Q5 8 6 6"/><path d="M17 10 Q19 8 18 6"/></svg>`,
+  `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="14" rx="6" ry="8"/><circle cx="12" cy="6" r="5"/><circle cx="10" cy="5.5" r="1.2" fill="currentColor"/><circle cx="14" cy="5.5" r="1.2" fill="currentColor"/><path d="M10.5 7.5 Q12 8.5 13.5 7.5"/><path d="M6 10 Q4 7 5 4"/><path d="M18 10 Q20 7 19 4"/><path d="M9 2 Q10 0 12 1 Q14 0 15 2"/></svg>`,
+  `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="14" rx="7" ry="9"/><circle cx="12" cy="5" r="5"/><circle cx="10" cy="4.5" r="1.3" fill="currentColor"/><circle cx="14" cy="4.5" r="1.3" fill="currentColor"/><path d="M10.5 6.5 Q12 7.5 13.5 6.5"/><path d="M5 10 Q3 7 4 3"/><path d="M19 10 Q21 7 20 3"/><path d="M8 1 Q9 -1 12 0 Q15 -1 16 1"/><path d="M10 0 L11 -2 L12 0.5 L13 -2 L14 0"/></svg>`
+];
+
 export function renderHeader() {
-  const { profile, unreadCount } = getState();
+  const { profile, unreadCount, streak } = getState();
+  const penguinStage = streak?.penguin_stage ?? profile?.penguin_stage ?? 0;
+  const inDanger = streak?.streak_in_danger ?? profile?.streak_in_danger ?? false;
 
   return `
     <div class="header">
@@ -13,6 +23,10 @@ export function renderHeader() {
         </div>
       </div>
       <div class="header-actions">
+        <button class="icon-btn penguin-btn ${inDanger ? 'penguin-danger' : ''}" id="streakBtn" title="Streaks & Achievements" aria-label="Streaks and Achievements">
+          ${stageIcons[Math.min(penguinStage, 4)]}
+          ${streak?.login_streak > 0 ? `<span class="penguin-streak-count">${streak.login_streak}</span>` : ''}
+        </button>
         <button class="icon-btn" id="notificationsBtn" title="Notifications" aria-label="Notifications">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           ${unreadCount > 0 ? `<span class="notification-dot"></span>` : ''}
