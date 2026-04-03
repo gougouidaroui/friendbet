@@ -1281,18 +1281,23 @@ body::before {
   transform: translateY(-50%);
   color: var(--foreground-subtle);
   pointer-events: none;
+  width: 16px;
+  height: 16px;
 }
 
 .friend-search input {
   width: 100%;
-  padding: var(--spacing-3) var(--spacing-3) var(--spacing-3) var(--spacing-9);
+  height: 2.75rem;
+  padding: 0 0.75rem 0 2.5rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   color: var(--foreground);
-  font-size: 14px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
   outline: none;
   transition: all var(--transition-fast);
+  box-sizing: border-box;
 }
 
 .friend-search input::placeholder {
@@ -1314,20 +1319,36 @@ body::before {
   border-radius: var(--radius-md);
   margin-bottom: var(--spacing-2);
   transition: all var(--transition-fast);
+  gap: var(--spacing-3);
 }
 
 .suggestion-item:hover {
   border-color: var(--border-strong);
 }
 
+.suggestion-item .friend-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.suggestion-item .friend-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
 .btn-sm {
-  padding: var(--spacing-1) var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-3);
   font-size: 12px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-1);
   white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 32px;
 }
 
 .btn-add-friend {
@@ -1873,6 +1894,21 @@ body::before {
     width: 36px;
     height: 36px;
     padding: 0;
+  }
+
+  .suggestion-item {
+    padding: var(--spacing-3);
+    gap: var(--spacing-2);
+  }
+
+  .suggestion-item .friend-name {
+    max-width: 120px;
+  }
+
+  .btn-sm {
+    padding: var(--spacing-2) var(--spacing-2);
+    font-size: 11px;
+    min-height: 30px;
   }
 
   .user-row {
