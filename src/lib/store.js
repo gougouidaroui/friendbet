@@ -5,7 +5,6 @@ const state = {
   notifications: [],
   unreadCount: 0,
   loading: true,
-  appLoading: false,
   currentTab: 'feed',
   currentFilter: 'all',
   streak: null,
@@ -62,12 +61,4 @@ export function updateStateSilent(partial) {
 
 export function updateStreak(streak) {
   updateState({ streak });
-}
-
-export function setAppLoading(loading) {
-  updateState({ appLoading: loading });
-}
-
-export function setAppLoadingSilent(loading) {
-  state.appLoading = loading;
 }
