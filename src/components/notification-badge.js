@@ -1,6 +1,22 @@
 import { getNotifications, getUnreadCount, markAsRead } from '../services/notifications.js';
 import { getState, updateNotifications } from '../lib/store.js';
 
+function updateNotificationBadge(unreadCount) {
+  const dot = document.querySelector('.notification-dot');
+  const btn = document.getElementById('notificationsBtn');
+  if (!btn) return;
+  
+  if (unreadCount > 0) {
+    if (!dot) {
+      const newDot = document.createElement('span');
+      newDot.className = 'notification-dot';
+      btn.appendChild(newDot);
+    }
+  } else {
+    if (dot) dot.remove();
+  }
+}
+
 let onSuccessCallback = null;
 
 export function openNotificationsModal(callback = null) {
@@ -111,6 +127,7 @@ function attachNotificationListeners() {
         const { user } = getState();
         const unreadCount = await getUnreadCount(user.id);
         updateNotifications(getState().notifications, unreadCount);
+        updateNotificationBadge(unreadCount);
       } catch (error) {
         console.error('Failed to mark as read:', error);
       }

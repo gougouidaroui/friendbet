@@ -40,7 +40,7 @@ export function updateBets(bets) {
 }
 
 export function updateNotifications(notifications, unreadCount) {
-  updateState({ notifications, unreadCount });
+  updateStateSilent({ notifications, unreadCount });
 }
 
 export function setLoading(loading) {
