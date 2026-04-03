@@ -11,8 +11,13 @@ async function start() {
   const { data: { session } } = await getCurrentUser();
   
   if (session?.user) {
-    const profile = await loadProfile(session.user);
-    updateUser(session.user, profile);
+    try {
+      const profile = await loadProfile(session.user);
+      updateUser(session.user, profile);
+    } catch (error) {
+      console.error('Failed to load profile:', error);
+      updateUser(session.user, null);
+    }
   }
   
   setLoading(false);

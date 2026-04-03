@@ -26,7 +26,7 @@ export function initApp(element) {
   subscribe(render);
   
   onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session?.user) {
+    if ((event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') && session?.user) {
       const profile = await loadProfile(session.user);
       updateUser(session.user, profile);
     } else if (event === 'SIGNED_OUT') {
