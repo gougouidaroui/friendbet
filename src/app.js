@@ -18,6 +18,7 @@ import { renderNotificationsModal, openNotificationsModal, attachNotificationsMo
 import { renderStreakModal, openStreakModal, attachStreakModalListeners } from './components/streak-modal.js';
 
 let appElement = null;
+let subscriptionsSetup = false;
 
 export function initApp(element) {
   appElement = element;
@@ -27,8 +28,10 @@ export function initApp(element) {
   onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session?.user) {
       const profile = await loadProfile(session.user);
+      subscriptionsSetup = false;
       updateUser(session.user, profile);
     } else if (event === 'SIGNED_OUT') {
+      subscriptionsSetup = false;
       updateUser(null, null);
     }
   });
@@ -84,9 +87,13 @@ function render() {
   document.getElementById('createBetBtn').onclick = () => openBetModal(null, loadCurrentTab);
   
   loadCurrentTab();
-  loadStreakData();
-  setupRealtime();
-  setupStreakRealtime();
+  
+  if (!subscriptionsSetup) {
+    subscriptionsSetup = true;
+    loadStreakData();
+    setupRealtime();
+    setupStreakRealtime();
+  }
 }
 
 async function loadCurrentTab() {
