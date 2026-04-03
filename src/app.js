@@ -63,7 +63,6 @@ function render() {
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
-      <div class="app-loading-overlay" id="appLoadingOverlay"><div class="loader"></div></div>
     </div>
     ${renderBetModal()}
     ${renderWinnerModal()}
@@ -74,6 +73,19 @@ function render() {
     ${renderNotificationsModal()}
     ${renderStreakModal()}
   `;
+  
+  if (!document.getElementById('appLoadingOverlay')) {
+    const overlay = document.createElement('div');
+    overlay.id = 'appLoadingOverlay';
+    overlay.className = 'app-loading-overlay';
+    overlay.innerHTML = `
+      <div class="app-loading-content">
+        <div class="loader"></div>
+        <div class="app-loading-bar"><div class="app-loading-bar-fill" id="appLoadingBarFill"></div></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
   
   attachHeaderListeners();
   attachTabsListeners(appElement, onTabChange);
@@ -89,8 +101,12 @@ function render() {
   document.getElementById('createBetBtn').onclick = () => openBetModal(null, loadCurrentTab);
   
   loadCurrentTab().finally(() => {
-    const overlay = document.getElementById('appLoadingOverlay');
-    if (overlay) overlay.remove();
+    const barFill = document.getElementById('appLoadingBarFill');
+    if (barFill) barFill.style.width = '100%';
+    setTimeout(() => {
+      const overlay = document.getElementById('appLoadingOverlay');
+      if (overlay) overlay.remove();
+    }, 400);
   });
   
   setupSubscriptions();

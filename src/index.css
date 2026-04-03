@@ -1402,16 +1402,38 @@ body::before {
   justify-content: center;
   background: var(--bg-primary);
   z-index: 1000;
-  animation: overlayFadeOut 0.3s ease-out forwards;
-  animation-delay: 0.1s;
-  pointer-events: none;
+  transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
 }
 
-@keyframes overlayFadeOut {
-  to {
-    opacity: 0;
-    visibility: hidden;
-  }
+.app-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-6);
+}
+
+.app-loading-bar {
+  width: 200px;
+  height: 4px;
+  background: var(--border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.app-loading-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--radius-full);
+  animation: loadingProgress 2s ease-out forwards;
+}
+
+@keyframes loadingProgress {
+  0% { width: 0%; }
+  30% { width: 40%; }
+  60% { width: 65%; }
+  80% { width: 80%; }
+  100% { width: 90%; }
 }
 
 /* ─── Skeleton ─── */
