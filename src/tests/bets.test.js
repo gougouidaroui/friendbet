@@ -37,6 +37,14 @@ vi.mock('@/lib/supabase.js', () => ({
   supabase: mockSupabase
 }));
 
+vi.mock('@/services/friends.js', () => ({
+  getFriendIds: vi.fn().mockResolvedValue(['friend-1', 'friend-2']),
+  getFriends: vi.fn().mockResolvedValue([
+    { id: 'friend-1', username: 'alice' },
+    { id: 'friend-2', username: 'bob' }
+  ])
+}));
+
 describe('Bets Service', () => {
   let bets;
 
@@ -182,7 +190,82 @@ describe('Bets Service', () => {
   });
 
   describe('getBets', () => {
-    it.skip('requires complex mocking - tested manually', () => {});
+    it('should return filtered bets for feed', async () => {
+      const mockBets = [
+        {
+          id: 'bet-1',
+          title: 'Public Bet',
+          status: 'published',
+          visibility: 'public',
+          creator_id: 'other-user',
+          creator: { id: 'other-user', username: 'alice' },
+          wagers: [{ id: 'w1', user_id: 'other-user', side: 'for', amount: 100 }]
+        },
+        {
+          id: 'bet-2',
+          title: 'My Bet',
+          status: 'published',
+          visibility: 'friends',
+          creator_id: 'user-123',
+          creator: { id: 'user-123', username: 'me' },
+          wagers: []
+        }
+      ];
+
+      const queryMock = {
+        eq: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({ data: mockBets, error: null })
+      };
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue(queryMock)
+      });
+
+      const result = await bets.getBets('user-123', 'feed');
+
+      expect(mockSupabase.from).toHaveBeenCalledWith('bets');
+      expect(queryMock.eq).toHaveBeenCalledWith('status', 'published');
+      expect(result).toHaveLength(2);
+      expect(result[0].title).toBe('Public Bet');
+      expect(result[1].title).toBe('My Bet');
+    });
+
+    it('should filter to only user bets for mybets', async () => {
+      const mockBets = [
+        {
+          id: 'bet-1',
+          title: 'Bet I joined',
+          status: 'published',
+          visibility: 'public',
+          creator_id: 'other-user',
+          creator: { id: 'other-user', username: 'alice' },
+          wagers: [{ id: 'w1', user_id: 'user-123', side: 'for', amount: 100 }]
+        },
+        {
+          id: 'bet-2',
+          title: 'Bet I did not join',
+          status: 'published',
+          visibility: 'public',
+          creator_id: 'other-user',
+          creator: { id: 'other-user', username: 'alice' },
+          wagers: [{ id: 'w2', user_id: 'other-user', side: 'for', amount: 50 }]
+        }
+      ];
+
+      const queryMock = {
+        eq: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({ data: mockBets, error: null })
+      };
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue(queryMock)
+      });
+
+      const result = await bets.getBets('user-123', 'mybets');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].title).toBe('Bet I joined');
+    });
   });
 
   describe('subscribeToBets', () => {

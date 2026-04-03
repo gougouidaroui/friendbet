@@ -43,9 +43,14 @@ async function loadProfile(userId) {
     let streakData = null;
     if (isSelf) {
       try {
-        streakData = await getStreakData();
+        const raw = await getStreakData();
+        streakData = raw ? {
+          login_streak: raw.out_login_streak ?? raw.login_streak ?? 0,
+          win_streak: raw.out_win_streak ?? raw.win_streak ?? 0,
+        } : { login_streak: 0, win_streak: 0 };
       } catch (e) {
         console.log('Could not load streak data');
+        streakData = { login_streak: 0, win_streak: 0 };
       }
     }
     
@@ -64,7 +69,7 @@ async function loadProfile(userId) {
           <div class="profile-stat-value">${friends.length}</div>
           <div class="profile-stat-label">Friends</div>
         </div>
-        ${isSelf && streakData ? `
+        ${isSelf ? `
           <div class="profile-stat">
             <div class="profile-stat-value">${streakData.login_streak}</div>
             <div class="profile-stat-label">Streak</div>

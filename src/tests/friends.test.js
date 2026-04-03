@@ -94,15 +94,91 @@ describe('Friends Service', () => {
   });
 
   describe('getFriends', () => {
-    it.skip('requires complex mocking - tested manually', () => {});
+    it('should return mapped friend list for accepted friendships', async () => {
+      const mockData = [
+        {
+          id: 'fs-1',
+          requester_id: 'user-1',
+          addressee_id: 'user-2',
+          status: 'accepted',
+          created_at: '2024-01-01',
+          requester: { id: 'user-1', username: 'alice' },
+          addressee: { id: 'user-2', username: 'bob' }
+        }
+      ];
+
+      const chainMock = {
+        or: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ data: mockData, error: null })
+      };
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue(chainMock)
+      });
+
+      const result = await friends.getFriends('user-1');
+
+      expect(mockSupabase.from).toHaveBeenCalledWith('friendships');
+      expect(chainMock.or).toHaveBeenCalled();
+      expect(chainMock.eq).toHaveBeenCalledWith('status', 'accepted');
+      expect(result).toHaveLength(1);
+      expect(result[0]).toHaveProperty('friendshipId', 'fs-1');
+      expect(result[0]).toHaveProperty('username', 'bob');
+    });
   });
 
   describe('getPendingRequests', () => {
-    it.skip('requires complex mocking - tested manually', () => {});
+    it('should return pending friend requests for user', async () => {
+      const mockData = [
+        {
+          id: 'fs-2',
+          created_at: '2024-01-02',
+          requester: { id: 'user-3', username: 'charlie' }
+        }
+      ];
+
+      const eqMock = vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockResolvedValue({ data: mockData, error: null })
+      }));
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: eqMock
+        })
+      });
+
+      const result = await friends.getPendingRequests('user-2');
+
+      expect(mockSupabase.from).toHaveBeenCalledWith('friendships');
+      expect(result).toHaveLength(1);
+      expect(result[0].requester.username).toBe('charlie');
+    });
   });
 
   describe('getFriendIds', () => {
-    it.skip('requires complex mocking - tested manually', () => {});
+    it('should return array of friend ids', async () => {
+      const mockData = [
+        {
+          id: 'fs-1',
+          status: 'accepted',
+          created_at: '2024-01-01',
+          requester_id: 'user-1',
+          addressee_id: 'user-4',
+          requester: { id: 'user-1', username: 'alice' },
+          addressee: { id: 'user-4', username: 'dave' }
+        }
+      ];
+
+      const chainMock = {
+        or: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ data: mockData, error: null })
+      };
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue(chainMock)
+      });
+
+      const result = await friends.getFriendIds('user-1');
+
+      expect(result).toEqual(['user-4']);
+    });
   });
 
   describe('subscribeToFriendRequests', () => {

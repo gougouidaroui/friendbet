@@ -1,4 +1,5 @@
 import { getState, subscribe, updateUser, setLoading, updateStreak, updateStateSilent } from './lib/store.js';
+import { removeAll, has, registerChannel } from './lib/subscriptions.js';
 import { onAuthStateChange, loadProfile } from './services/auth.js';
 import { getBets, getDrafts, deleteBet, subscribeToBets, getBet, placeWager as placeWagerService } from './services/bets.js';
 import { signOut } from './services/auth.js';
@@ -18,7 +19,6 @@ import { renderNotificationsModal, openNotificationsModal, attachNotificationsMo
 import { renderStreakModal, openStreakModal, attachStreakModalListeners } from './components/streak-modal.js';
 
 let appElement = null;
-let subscriptionsSetup = false;
 
 export function initApp(element) {
   appElement = element;
@@ -28,10 +28,9 @@ export function initApp(element) {
   onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session?.user) {
       const profile = await loadProfile(session.user);
-      subscriptionsSetup = false;
       updateUser(session.user, profile);
     } else if (event === 'SIGNED_OUT') {
-      subscriptionsSetup = false;
+      removeAll();
       updateUser(null, null);
     }
   });
@@ -88,11 +87,37 @@ function render() {
   
   loadCurrentTab();
   
-  if (!subscriptionsSetup) {
-    subscriptionsSetup = true;
+  setupSubscriptions();
+}
+
+function setupSubscriptions() {
+  const { user } = getState();
+  if (!user) return;
+  
+  if (!has('bets_changes')) {
     loadStreakData();
-    setupRealtime();
-    setupStreakRealtime();
+    const channel = subscribeToBets(async () => {
+      await loadCurrentTab();
+    });
+    registerChannel('bets_changes', channel);
+  }
+  
+  if (!has('streak_changes')) {
+    const channel = subscribeToStreakChanges(user.id, (newProfile) => {
+      const streakData = {
+        login_streak: newProfile.out_login_streak ?? newProfile.login_streak ?? 0,
+        penguin_stage: newProfile.out_penguin_stage ?? newProfile.penguin_stage ?? 0,
+        win_streak: newProfile.out_win_streak ?? newProfile.win_streak ?? 0,
+        best_win_streak: newProfile.out_best_win_streak ?? newProfile.best_win_streak ?? 0,
+        trophy_level: newProfile.out_trophy_level ?? newProfile.trophy_level ?? 0,
+        rescues_remaining: newProfile.out_rescues_remaining ?? newProfile.rescues_remaining ?? 0,
+        streak_in_danger: newProfile.out_streak_in_danger ?? newProfile.streak_in_danger ?? false,
+        days_to_next_stage: newProfile.out_days_to_next_stage ?? newProfile.days_to_next_stage ?? 0,
+      };
+      updateStateSilent({ streak: streakData });
+      updateHeader();
+    });
+    registerChannel('streak_changes', channel);
   }
 }
 
@@ -290,16 +315,6 @@ function attachHeaderListeners() {
   };
 }
 
-function setupRealtime() {
-  const channel = subscribeToBets(async () => {
-    await loadCurrentTab();
-  });
-  
-  return () => {
-    if (channel) channel.unsubscribe();
-  };
-}
-
 async function loadStreakData() {
   try {
     const { user } = getState();
@@ -307,38 +322,18 @@ async function loadStreakData() {
     const raw = await getStreakData();
     if (!raw) return;
     updateStreak({
-      login_streak: raw.out_login_streak,
-      penguin_stage: raw.out_penguin_stage,
-      win_streak: raw.out_win_streak,
-      best_win_streak: raw.out_best_win_streak,
-      trophy_level: raw.out_trophy_level,
-      rescues_remaining: raw.out_rescues_remaining,
-      streak_in_danger: raw.out_streak_in_danger,
-      days_to_next_stage: raw.out_days_to_next_stage,
+      login_streak: raw.out_login_streak ?? raw.login_streak ?? 0,
+      penguin_stage: raw.out_penguin_stage ?? raw.penguin_stage ?? 0,
+      win_streak: raw.out_win_streak ?? raw.win_streak ?? 0,
+      best_win_streak: raw.out_best_win_streak ?? raw.best_win_streak ?? 0,
+      trophy_level: raw.out_trophy_level ?? raw.trophy_level ?? 0,
+      rescues_remaining: raw.out_rescues_remaining ?? raw.rescues_remaining ?? 0,
+      streak_in_danger: raw.out_streak_in_danger ?? raw.streak_in_danger ?? false,
+      days_to_next_stage: raw.out_days_to_next_stage ?? raw.days_to_next_stage ?? 0,
     });
   } catch (e) {
     console.log('Could not load streak data');
   }
-}
-
-function setupStreakRealtime() {
-  const { user } = getState();
-  if (!user) return;
-  
-  subscribeToStreakChanges(user.id, (newProfile) => {
-    const streakData = {
-      login_streak: newProfile.out_login_streak ?? newProfile.login_streak,
-      penguin_stage: newProfile.out_penguin_stage ?? newProfile.penguin_stage,
-      win_streak: newProfile.out_win_streak ?? newProfile.win_streak,
-      best_win_streak: newProfile.out_best_win_streak ?? newProfile.best_win_streak,
-      trophy_level: newProfile.out_trophy_level ?? newProfile.trophy_level,
-      rescues_remaining: newProfile.out_rescues_remaining ?? newProfile.rescues_remaining,
-      streak_in_danger: newProfile.out_streak_in_danger ?? newProfile.streak_in_danger,
-      days_to_next_stage: newProfile.out_days_to_next_stage ?? newProfile.days_to_next_stage,
-    };
-    updateStateSilent({ streak: streakData });
-    updateHeader();
-  });
 }
 
 export async function updateUserProfile(partial) {

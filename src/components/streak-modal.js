@@ -1,6 +1,31 @@
 import { getStreakData, getPenguinCalendar, useRescue, updateWinStreak } from '../services/streaks.js';
 import { getState, updateStreak } from '../lib/store.js';
 
+function normalizeStreak(raw) {
+  if (!raw) {
+    return {
+      login_streak: 0,
+      penguin_stage: 0,
+      win_streak: 0,
+      best_win_streak: 0,
+      trophy_level: 0,
+      rescues_remaining: 0,
+      streak_in_danger: false,
+      days_to_next_stage: 0,
+    };
+  }
+  return {
+    login_streak: raw.out_login_streak ?? raw.login_streak ?? 0,
+    penguin_stage: raw.out_penguin_stage ?? raw.penguin_stage ?? 0,
+    win_streak: raw.out_win_streak ?? raw.win_streak ?? 0,
+    best_win_streak: raw.out_best_win_streak ?? raw.best_win_streak ?? 0,
+    trophy_level: raw.out_trophy_level ?? raw.trophy_level ?? 0,
+    rescues_remaining: raw.out_rescues_remaining ?? raw.rescues_remaining ?? 0,
+    streak_in_danger: raw.out_streak_in_danger ?? raw.streak_in_danger ?? false,
+    days_to_next_stage: raw.out_days_to_next_stage ?? raw.days_to_next_stage ?? 0,
+  };
+}
+
 function getPenguinSVG(stage, inDanger) {
   const dangerClass = inDanger ? ' penguin-danger' : '';
   const svgs = [
@@ -179,7 +204,8 @@ async function loadStreakModal() {
   container.innerHTML = '<div class="loader"></div>';
 
   try {
-    const streak = await getStreakData();
+    const raw = await getStreakData();
+    const streak = normalizeStreak(raw);
     const calendar = await getPenguinCalendar();
 
     container.innerHTML = `
