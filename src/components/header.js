@@ -51,7 +51,7 @@ export function renderHeader() {
 }
 
 export function updateHeader() {
-  const { profile } = getState();
+  const { profile, streak } = getState();
   
   const avatar = document.getElementById('headerAvatar');
   const username = document.getElementById('headerUsername');
@@ -60,4 +60,12 @@ export function updateHeader() {
   if (avatar) avatar.textContent = profile?.username?.charAt(0).toUpperCase() || '?';
   if (username) username.textContent = profile?.username || 'User';
   if (points) points.textContent = `${(profile?.points || 0).toLocaleString()} pts`;
+  
+  const streakBtn = document.getElementById('streakBtn');
+  if (streakBtn) {
+    const penguinStage = streak?.penguin_stage ?? profile?.penguin_stage ?? 0;
+    const inDanger = streak?.streak_in_danger ?? profile?.streak_in_danger ?? false;
+    streakBtn.className = `icon-btn penguin-btn ${inDanger ? 'penguin-danger' : ''}`;
+    streakBtn.innerHTML = `${stageIcons[Math.min(penguinStage, 4)]}${streak?.login_streak > 0 ? `<span class="penguin-streak-count">${streak.login_streak}</span>` : ''}`;
+  }
 }

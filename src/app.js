@@ -1,4 +1,4 @@
-import { getState, subscribe, updateUser, setLoading, updateStreak } from './lib/store.js';
+import { getState, subscribe, updateUser, setLoading, updateStreak, updateStateSilent } from './lib/store.js';
 import { onAuthStateChange, loadProfile } from './services/auth.js';
 import { getBets, getDrafts, deleteBet, subscribeToBets, getBet, placeWager as placeWagerService } from './services/bets.js';
 import { signOut } from './services/auth.js';
@@ -326,7 +326,7 @@ function setupStreakRealtime() {
   if (!user) return;
   
   subscribeToStreakChanges(user.id, (newProfile) => {
-    updateStreak({
+    const streakData = {
       login_streak: newProfile.out_login_streak ?? newProfile.login_streak,
       penguin_stage: newProfile.out_penguin_stage ?? newProfile.penguin_stage,
       win_streak: newProfile.out_win_streak ?? newProfile.win_streak,
@@ -335,7 +335,9 @@ function setupStreakRealtime() {
       rescues_remaining: newProfile.out_rescues_remaining ?? newProfile.rescues_remaining,
       streak_in_danger: newProfile.out_streak_in_danger ?? newProfile.streak_in_danger,
       days_to_next_stage: newProfile.out_days_to_next_stage ?? newProfile.days_to_next_stage,
-    });
+    };
+    updateStateSilent({ streak: streakData });
+    updateHeader();
   });
 }
 

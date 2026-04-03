@@ -55,6 +55,10 @@ export function setCurrentFilter(filter) {
   updateState({ currentFilter: filter });
 }
 
+export function updateStateSilent(partial) {
+  Object.assign(state, partial);
+}
+
 export function updateStreak(streak) {
   updateState({ streak });
 }

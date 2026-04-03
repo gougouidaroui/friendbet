@@ -181,7 +181,6 @@ async function loadStreakModal() {
   try {
     const streak = await getStreakData();
     const calendar = await getPenguinCalendar();
-    updateStreak(streak);
 
     container.innerHTML = `
       <div class="streak-tabs">
