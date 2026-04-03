@@ -29,6 +29,20 @@ export function initApp(element) {
     if ((event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') && session?.user) {
       const { user } = getState();
       if (user?.id === session.user.id) return;
+      
+      if (!document.getElementById('appLoadingOverlay')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'appLoadingOverlay';
+        overlay.className = 'app-loading-overlay';
+        overlay.innerHTML = `
+          <div class="app-loading-content">
+            <div class="app-loading-status" id="appLoadingStatus">Signing in...</div>
+            <div class="app-loading-bar"><div class="app-loading-bar-fill" id="appLoadingBarFill" style="width:30%"></div></div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      }
+      
       const profile = await loadProfile(session.user);
       updateUser(session.user, profile);
     } else if (event === 'SIGNED_OUT') {
@@ -49,22 +63,11 @@ function render() {
   }
   
   if (!user) {
+    const overlay = document.getElementById('appLoadingOverlay');
+    if (overlay) overlay.remove();
     appElement.innerHTML = renderAuth();
     attachAuthListeners(appElement);
     return;
-  }
-  
-  if (!document.getElementById('appLoadingOverlay')) {
-    const overlay = document.createElement('div');
-    overlay.id = 'appLoadingOverlay';
-    overlay.className = 'app-loading-overlay';
-    overlay.innerHTML = `
-      <div class="app-loading-content">
-        <div class="loader"></div>
-        <div class="app-loading-bar"><div class="app-loading-bar-fill" id="appLoadingBarFill"></div></div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
   }
   
   appElement.innerHTML = `
@@ -101,6 +104,8 @@ function render() {
   document.getElementById('createBetBtn').onclick = () => openBetModal(null, loadCurrentTab);
   
   loadCurrentTab().finally(() => {
+    const status = document.getElementById('appLoadingStatus');
+    if (status) status.textContent = 'Almost there...';
     const barFill = document.getElementById('appLoadingBarFill');
     if (barFill) barFill.style.width = '100%';
     setTimeout(() => {
