@@ -17,6 +17,7 @@ import { renderProfileModal, openProfileModal, attachProfileModalListeners } fro
 import { renderFriendsPanel, openFriendsPanel, attachFriendsPanelListeners } from './components/friends-panel.js';
 import { renderNotificationsModal, openNotificationsModal, attachNotificationsModalListeners } from './components/notification-badge.js';
 import { renderStreakModal, openStreakModal, attachStreakModalListeners } from './components/streak-modal.js';
+import { renderWagerModal, openWagerModal, attachWagerModalListeners } from './components/wager-modal.js';
 
 let appElement = null;
 
@@ -88,6 +89,7 @@ function render() {
     ${renderFriendsPanel()}
     ${renderNotificationsModal()}
     ${renderStreakModal()}
+    ${renderWagerModal()}
   `;
   
   attachHeaderListeners();
@@ -100,6 +102,7 @@ function render() {
   attachFriendsPanelListeners();
   attachNotificationsModalListeners();
   attachStreakModalListeners();
+  attachWagerModalListeners();
   
   document.getElementById('createBetBtn').onclick = () => openBetModal(null, loadCurrentTab);
   
@@ -273,22 +276,9 @@ function attachBetCardListeners() {
     btn.onclick = async () => {
       const betId = btn.dataset.betId;
       const side = btn.dataset.action === 'bet-for' ? 'for' : 'against';
-      const amount = prompt(`Enter your stake for "${side}" side:`);
-      
-      if (!amount || isNaN(parseInt(amount)) || parseInt(amount) <= 0) return;
-      
-      const wagerAmount = parseInt(amount);
-      
-      try {
-        const { placeWager } = await import('./services/bets.js');
-        const { loadProfile } = await import('./services/auth.js');
-        await placeWager(betId, user.id, side, wagerAmount);
-        const profile = await loadProfile(user);
-        updateUser(user, profile);
-        loadCurrentTab();
-      } catch (error) {
-        alert(error.message || 'Failed to place wager');
-      }
+      const betCard = btn.closest('.bet-card');
+      const betTitle = betCard?.querySelector('.bet-title')?.textContent || '';
+      openWagerModal(betId, side, betTitle, loadCurrentTab);
     };
   });
   
