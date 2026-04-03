@@ -28,3 +28,5 @@ coverage/
 *.local
 
 .opencode/
+
+report.html

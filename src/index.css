@@ -13,10 +13,10 @@
 
   --foreground: #f0f0f5;
   --foreground-secondary: #c5c5d0;
-  --foreground-muted: #7a7a8e;
+  --foreground-muted: #8585a0;
   --foreground-subtle: #4a4a5c;
 
-  --accent: #3b82f6;
+  --accent: #4086f7;
   --accent-hover: #2563eb;
   --accent-light: rgba(59, 130, 246, 0.12);
   --accent-border: rgba(59, 130, 246, 0.25);

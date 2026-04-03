@@ -23,7 +23,7 @@ export function renderHeader() {
         </div>
       </div>
       <div class="header-actions">
-        <button class="icon-btn penguin-btn ${inDanger ? 'penguin-danger' : ''}" id="streakBtn" title="Streaks & Achievements" aria-label="Streaks and Achievements">
+        <button class="icon-btn penguin-btn ${inDanger ? 'penguin-danger' : ''}" id="streakBtn" title="Streaks & Achievements" aria-label="${streak?.login_streak || 0} day streak">
           ${stageIcons[Math.min(penguinStage, 4)]}
           ${streak?.login_streak > 0 ? `<span class="penguin-streak-count">${streak.login_streak}</span>` : ''}
         </button>
@@ -67,5 +67,6 @@ export function updateHeader() {
     const inDanger = streak?.streak_in_danger ?? profile?.streak_in_danger ?? false;
     streakBtn.className = `icon-btn penguin-btn ${inDanger ? 'penguin-danger' : ''}`;
     streakBtn.innerHTML = `${stageIcons[Math.min(penguinStage, 4)]}${streak?.login_streak > 0 ? `<span class="penguin-streak-count">${streak.login_streak}</span>` : ''}`;
+    streakBtn.setAttribute('aria-label', `${streak?.login_streak || 0} day streak`);
   }
 }
