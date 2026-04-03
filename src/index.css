@@ -1269,6 +1269,98 @@ body::before {
   min-width: 40px;
 }
 
+.friend-search {
+  position: relative;
+  margin-bottom: var(--spacing-4);
+}
+
+.friend-search svg {
+  position: absolute;
+  left: var(--spacing-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--foreground-subtle);
+  pointer-events: none;
+}
+
+.friend-search input {
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-3) var(--spacing-3) var(--spacing-9);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  font-size: 14px;
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.friend-search input::placeholder {
+  color: var(--foreground-subtle);
+}
+
+.friend-search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+.suggestion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-2);
+  transition: all var(--transition-fast);
+}
+
+.suggestion-item:hover {
+  border-color: var(--border-strong);
+}
+
+.btn-sm {
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  white-space: nowrap;
+}
+
+.btn-add-friend {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-add-friend:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-add-friend:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-sent {
+  background: var(--bg-elevated);
+  color: var(--foreground-muted);
+  border: 1px solid var(--border);
+  cursor: default;
+}
+
+.btn-friends {
+  background: var(--bg-elevated);
+  color: var(--foreground-muted);
+  border: 1px solid var(--border);
+  cursor: default;
+}
+
 /* ─── Profile ─── */
 
 .profile-header {
