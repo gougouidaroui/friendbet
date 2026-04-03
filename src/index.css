@@ -1400,7 +1400,7 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-primary);
+  background: var(--bg-deep);
   z-index: 1000;
   transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
 }

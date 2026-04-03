@@ -54,6 +54,19 @@ function render() {
     return;
   }
   
+  if (!document.getElementById('appLoadingOverlay')) {
+    const overlay = document.createElement('div');
+    overlay.id = 'appLoadingOverlay';
+    overlay.className = 'app-loading-overlay';
+    overlay.innerHTML = `
+      <div class="app-loading-content">
+        <div class="loader"></div>
+        <div class="app-loading-bar"><div class="app-loading-bar-fill" id="appLoadingBarFill"></div></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+  
   appElement.innerHTML = `
     <div class="app active">
       <div class="container">
@@ -73,19 +86,6 @@ function render() {
     ${renderNotificationsModal()}
     ${renderStreakModal()}
   `;
-  
-  if (!document.getElementById('appLoadingOverlay')) {
-    const overlay = document.createElement('div');
-    overlay.id = 'appLoadingOverlay';
-    overlay.className = 'app-loading-overlay';
-    overlay.innerHTML = `
-      <div class="app-loading-content">
-        <div class="loader"></div>
-        <div class="app-loading-bar"><div class="app-loading-bar-fill" id="appLoadingBarFill"></div></div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-  }
   
   attachHeaderListeners();
   attachTabsListeners(appElement, onTabChange);
