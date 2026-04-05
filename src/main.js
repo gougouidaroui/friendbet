@@ -2,7 +2,13 @@ import './index.css';
 import { initApp } from './app.js';
 import { getCurrentUser, loadProfile } from './services/auth.js';
 import { getStreakData } from './services/streaks.js';
-import { updateUser, setLoading, updateStreak } from './lib/store.js';
+import { updateUser, setLoading, updateStreak, getState } from './lib/store.js';
+import { renderAdminDashboard, attachAdminDashboardListeners, resetAdminTab } from './components/admin-dashboard.js';
+import { loadOverview } from './components/admin-overview.js';
+import { loadUsers } from './components/admin-users.js';
+import { loadBets } from './components/admin-bets.js';
+import { loadLogs } from './components/admin-logs.js';
+import { loadCourts } from './components/admin-courts.js';
 
 const app = document.getElementById('app');
 
@@ -23,6 +29,23 @@ function removeOverlay() {
     el.style.opacity = '0';
     setTimeout(() => el.remove(), 400);
   }
+}
+
+const adminTabLoaders = {
+  overview: loadOverview,
+  users: loadUsers,
+  bets: loadBets,
+  logs: loadLogs,
+  courts: loadCourts,
+};
+
+function initAdminDashboard() {
+  app.innerHTML = renderAdminDashboard();
+  attachAdminDashboardListeners((tab) => {
+    const loader = adminTabLoaders[tab];
+    if (loader) loader();
+  });
+  loadOverview();
 }
 
 async function start() {
@@ -71,9 +94,17 @@ async function start() {
   }
   
   setLoading(false);
-  setLoadingStatus('Loading your bets...');
-  setProgress(60);
-  initApp(app);
+  
+  if (getState().profile?.is_admin) {
+    setLoadingStatus('Loading admin dashboard...');
+    setProgress(60);
+    resetAdminTab();
+    initAdminDashboard();
+  } else {
+    setLoadingStatus('Loading your bets...');
+    setProgress(60);
+    initApp(app);
+  }
 }
 
 start();

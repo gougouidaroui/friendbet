@@ -29,6 +29,7 @@ CREATE FUNCTION public.process_daily_bonus()
   )
   LANGUAGE plpgsql
   SECURITY DEFINER
+  SET search_path TO 'public'
 AS $function$
 DECLARE
   v_user_id UUID;
