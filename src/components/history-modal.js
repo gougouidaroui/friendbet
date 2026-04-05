@@ -66,6 +66,9 @@ async function loadHistory() {
         case 'loss':
           description = `Lost: ${trans.bet?.title || 'Unknown bet'}`;
           break;
+        case 'wager_refund':
+          description = `Wager Refund: ${trans.bet?.title || 'Unknown bet'}`;
+          break;
         case 'adjustment':
           description = 'Admin adjustment';
           break;
