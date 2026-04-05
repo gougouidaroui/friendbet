@@ -868,6 +868,22 @@ body::before {
   height: 18px;
 }
 
+.reveal-btn.shame-btn {
+  border-style: dashed;
+  border-color: var(--accent-warning-border);
+  background: var(--accent-warning-light);
+  color: var(--accent-warning);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.reveal-btn.shame-btn:hover {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: var(--accent-warning);
+  color: #fbbf24;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+}
+
 .wager-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
