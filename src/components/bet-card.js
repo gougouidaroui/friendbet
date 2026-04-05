@@ -8,6 +8,8 @@ export function renderBetCard(bet, context = 'feed') {
   const endTime = new Date(bet.end_time);
   const now = Date.now();
   const isClosed = now > endTime.getTime();
+  const hoursSinceClose = (now - endTime.getTime()) / (1000 * 60 * 60);
+  const resolutionWindowOpen = hoursSinceClose >= 24;
   const userHasWagered = bet.wagers?.some(w => w.user_id === user.id);
   const isCreator = bet.creator_id === user.id;
   
@@ -59,10 +61,15 @@ export function renderBetCard(bet, context = 'feed') {
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       You bet ${userWager?.side}
     </span>`;
-  } else if (bet.status === 'published' && isClosed && isCreator) {
+  } else if (bet.status === 'published' && isClosed && !resolutionWindowOpen && isCreator) {
     actions = `<button class="btn btn-primary" data-action="open-court" data-bet-id="${bet.id}">Resolve Bet</button>`;
-  } else if (bet.status === 'published' && isClosed && userHasWagered) {
+  } else if (bet.status === 'published' && isClosed && !resolutionWindowOpen && userHasWagered) {
     actions = `<button class="btn btn-primary" data-action="open-court" data-bet-id="${bet.id}">Resolve Bet</button>`;
+  } else if (bet.status === 'published' && isClosed && resolutionWindowOpen) {
+    actions = `<span class="result-badge" style="background: var(--accent-secondary-light); color: var(--accent-secondary); border: 1px solid var(--accent-secondary-border);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Resolution window expired
+    </span>`;
   } else if (bet.status === 'in_resolution') {
     actions = `<button class="btn btn-court" data-action="open-court" data-bet-id="${bet.id}">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>

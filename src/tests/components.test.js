@@ -158,12 +158,12 @@ describe('BetCard Component', () => {
       expect(html).toContain('wager-reveal');
     });
 
-    it('should show select winner button for closed bets by creator', () => {
+    it('should show resolve button for recently closed bets by creator', () => {
       const bet = {
         id: 'bet-123',
         title: 'Closed Bet',
         status: 'published',
-        end_time: new Date(Date.now() - 1000).toISOString(),
+        end_time: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
         creator_id: 'user-123',
         wagers: []
       };
@@ -171,6 +171,22 @@ describe('BetCard Component', () => {
       const html = renderBetCard(bet, 'feed');
 
       expect(html).toContain('data-action="open-court"');
+    });
+
+    it('should show expired message for bets closed over 24h ago', () => {
+      const bet = {
+        id: 'bet-123',
+        title: 'Expired Bet',
+        status: 'published',
+        end_time: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
+        creator_id: 'user-123',
+        wagers: []
+      };
+
+      const html = renderBetCard(bet, 'feed');
+
+      expect(html).toContain('Resolution window expired');
+      expect(html).not.toContain('data-action="open-court"');
     });
 
     it('should show visibility badge for non-public bets', () => {
