@@ -688,7 +688,8 @@ DECLARE
   v_bet RECORD;
   v_wager RECORD;
 BEGIN
-  SELECT * INTO v_bet FROM public.bets WHERE id = p_bet_id;
+  -- Lock the bet row to prevent concurrent refunds
+  SELECT * INTO v_bet FROM public.bets WHERE id = p_bet_id FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Bet not found';
   END IF;
@@ -701,15 +702,15 @@ BEGIN
     RAISE EXCEPTION 'Bet has not expired yet';
   END IF;
 
-  -- Refund all wagers
+  -- Update bet status FIRST to prevent double refunds
+  UPDATE public.bets SET status = 'refunded', resolved_at = NOW() WHERE id = p_bet_id;
+
+  -- Then refund all wagers
   FOR v_wager IN SELECT * FROM public.wagers WHERE bet_id = p_bet_id LOOP
     UPDATE public.profiles SET points = points + v_wager.amount WHERE id = v_wager.user_id;
     INSERT INTO internal.transactions (user_id, type, amount, bet_id, created_by, reason)
     VALUES (v_wager.user_id, 'wager_refund', v_wager.amount, p_bet_id, v_bet.creator_id, 'Bet expired - no resolution proposed');
   END LOOP;
-
-  -- Update bet status
-  UPDATE public.bets SET status = 'refunded', resolved_at = NOW() WHERE id = p_bet_id;
 END;
 $function$
 ;

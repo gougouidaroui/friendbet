@@ -205,13 +205,11 @@ async function loadMyBets() {
   
   try {
     const bets = await getBets(user.id, 'mybets');
-    await autoExpireBets(bets);
-    const bets2 = await getBets(user.id, 'mybets');
     
-    if (bets2.length === 0) {
+    if (bets.length === 0) {
       container.innerHTML = renderEmptyState('shield', 'No active bets', 'Join a bet from the feed to get started!');
     } else {
-      container.innerHTML = bets2.map(bet => renderBetCard(bet, 'mybets')).join('');
+      container.innerHTML = bets.map(bet => renderBetCard(bet, 'mybets')).join('');
     }
     
     attachBetCardListeners();

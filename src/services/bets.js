@@ -191,6 +191,8 @@ export async function getBetWithUsernames(betId) {
   };
 }
 
+let _expireLock = false;
+
 export async function expireResolution(betId) {
   const { error } = await supabase.rpc('expire_resolution', {
     p_bet_id: betId
@@ -199,6 +201,9 @@ export async function expireResolution(betId) {
 }
 
 export async function autoExpireBets(bets) {
+  if (_expireLock) return;
+  _expireLock = true;
+
   const expired = bets.filter(bet => {
     if (bet.status !== 'published') return false;
     const endTime = new Date(bet.end_time);
