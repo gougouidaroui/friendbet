@@ -1,4 +1,12 @@
 import { supabase } from '../lib/supabase.js';
+import { get, set, invalidate } from '../lib/cache.js';
+
+const FRIENDS_TTL = 5 * 60 * 1000;
+
+export function invalidateFriendCache() {
+  invalidate('friends');
+  invalidate('friendIds');
+}
 
 export async function sendFriendRequest(addresseeId) {
   const { error } = await supabase.rpc('send_friend_request', {
@@ -14,6 +22,7 @@ export async function acceptFriendRequest(friendshipId) {
   });
   
   if (error) throw error;
+  invalidateFriendCache();
 }
 
 export async function declineFriendRequest(friendshipId) {
@@ -25,6 +34,9 @@ export async function declineFriendRequest(friendshipId) {
 }
 
 export async function getFriends(userId) {
+  const cached = get('friends');
+  if (cached) return cached;
+
   const { data, error } = await supabase
     .from('friendships')
     .select(`
@@ -39,10 +51,13 @@ export async function getFriends(userId) {
   
   if (error) throw error;
   
-  return data.map(f => {
+  const friends = data.map(f => {
     const friend = f.requester_id === userId ? f.addressee : f.requester;
     return { friendshipId: f.id, ...friend };
   });
+
+  set('friends', friends, FRIENDS_TTL);
+  return friends;
 }
 
 export async function getPendingRequests(userId) {
@@ -61,8 +76,13 @@ export async function getPendingRequests(userId) {
 }
 
 export async function getFriendIds(userId) {
+  const cached = get('friendIds');
+  if (cached) return cached;
+
   const friends = await getFriends(userId);
-  return friends.map(f => f.id);
+  const ids = friends.map(f => f.id);
+  set('friendIds', ids, FRIENDS_TTL);
+  return ids;
 }
 
 export async function removeFriend(friendshipId) {
@@ -71,6 +91,7 @@ export async function removeFriend(friendshipId) {
   });
   
   if (error) throw error;
+  invalidateFriendCache();
 }
 
 export function subscribeToFriendRequests(userId, callback) {

@@ -1,5 +1,4 @@
 import { supabase } from '../lib/supabase.js';
-import { getFriendIds } from './friends.js';
 
 export async function createBet(bet, userId, publish = false) {
   const { data, error } = await supabase.rpc('create_bet', {
@@ -70,9 +69,6 @@ export async function getBet(betId) {
 }
 
 export async function getBets(userId, filter = 'all') {
-  const friendIds = await getFriendIds(userId);
-  friendIds.push(userId);
-  
   let query = supabase
     .from('bets')
     .select(`
@@ -86,28 +82,19 @@ export async function getBets(userId, filter = 'all') {
       )
     `)
     .in('status', ['published', 'in_resolution', 'resolved', 'refunded'])
-    .or(`visibility.eq.public,creator_id.eq.${userId}`);
-  
-  const { data, error } = await query
     .order('created_at', { ascending: false });
+  
+  const { data, error } = await query;
   
   if (error) throw error;
   
-  const filteredBets = data.filter(bet => {
-    if (bet.visibility === 'public') return true;
-    if (bet.visibility === 'friends') {
-      return bet.creator_id === userId || friendIds.includes(bet.creator_id);
-    }
-    return false;
-  });
-  
   if (filter === 'mybets') {
-    return filteredBets.filter(bet => 
+    return data.filter(bet => 
       bet.wagers && bet.wagers.some(w => w.user_id === userId)
     );
   }
   
-  return filteredBets;
+  return data;
 }
 
 export async function getDrafts(userId) {
@@ -191,19 +178,15 @@ export async function getBetWithUsernames(betId) {
   };
 }
 
-let _expireLock = false;
-
 export async function expireResolution(betId) {
-  const { error } = await supabase.rpc('expire_resolution', {
+  const { data, error } = await supabase.rpc('expire_resolution', {
     p_bet_id: betId
   });
   if (error) throw error;
+  return data;
 }
 
 export async function autoExpireBets(bets) {
-  if (_expireLock) return;
-  _expireLock = true;
-
   const expired = bets.filter(bet => {
     if (bet.status !== 'published') return false;
     const endTime = new Date(bet.end_time);
@@ -211,13 +194,20 @@ export async function autoExpireBets(bets) {
     return hoursSinceClose >= 24;
   });
 
-  for (const bet of expired) {
-    try {
-      await expireResolution(bet.id);
-    } catch (e) {
-      // Already expired or another error, skip silently
+  if (expired.length === 0) return [];
+
+  const results = await Promise.allSettled(
+    expired.map(bet => expireResolution(bet.id))
+  );
+
+  const expiredIds = new Set();
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled' && result.value) {
+      expiredIds.add(expired[i].id);
     }
-  }
+  });
+
+  return expiredIds;
 }
 
 export function subscribeToBets(callback) {

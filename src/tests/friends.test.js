@@ -40,6 +40,8 @@ describe('Friends Service', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
+    const { clear } = await import('@/lib/cache.js');
+    clear();
     friends = await import('@/services/friends.js');
   });
 

@@ -4,23 +4,16 @@ import { onAuthStateChange, loadProfile } from './services/auth.js';
 import { getBets, getDrafts, deleteBet, subscribeToBets, getBet, placeWager as placeWagerService, autoExpireBets } from './services/bets.js';
 import { signOut } from './services/auth.js';
 import { getStreakData, subscribeToStreakChanges } from './services/streaks.js';
+import { clear as clearCache, invalidate as invalidateCache } from './lib/cache.js';
 
 import { renderAuth, attachAuthListeners } from './components/auth.js';
 import { renderHeader, updateHeader } from './components/header.js';
 import { renderTabs, attachTabsListeners } from './components/tabs.js';
 import { renderBetCard, renderWagers, renderEmptyState } from './components/bet-card.js';
-import { renderBetModal, openBetModal, attachBetModalListeners } from './components/bet-modal.js';
-import { renderWinnerModal, openWinnerModal, attachWinnerModalListeners } from './components/winner-modal.js';
-import { renderHistoryModal, openHistoryModal, attachHistoryModalListeners } from './components/history-modal.js';
-import { renderAdminModal, openAdminModal, attachAdminModalListeners } from './components/admin-modal.js';
-import { renderProfileModal, openProfileModal, attachProfileModalListeners } from './components/profile-modal.js';
-import { renderFriendsPanel, openFriendsPanel, attachFriendsPanelListeners } from './components/friends-panel.js';
-import { renderNotificationsModal, openNotificationsModal, attachNotificationsModalListeners } from './components/notification-badge.js';
-import { renderStreakModal, openStreakModal, attachStreakModalListeners } from './components/streak-modal.js';
-import { renderWagerModal, openWagerModal, attachWagerModalListeners } from './components/wager-modal.js';
-import { renderCourtModal, openCourtModal, attachCourtModalListeners } from './components/court-modal.js';
 
 let appElement = null;
+let isFirstRender = true;
+let modalRegistry = {};
 
 export function initApp(element) {
   appElement = element;
@@ -49,6 +42,8 @@ export function initApp(element) {
       updateUser(session.user, profile);
     } else if (event === 'SIGNED_OUT') {
       removeAll();
+      clearCache();
+      modalRegistry = {};
       updateUser(null, null);
     }
   });
@@ -72,55 +67,132 @@ function render() {
     return;
   }
   
-  appElement.innerHTML = `
-    <main class="app active">
-      <div class="container">
-        ${renderHeader()}
-        ${renderTabs()}
-        <button class="fab" id="createBetBtn" title="Create Bet">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-      </div>
-    </main>
-    ${renderBetModal()}
-    ${renderWinnerModal()}
-    ${renderHistoryModal()}
-    ${renderAdminModal()}
-    ${renderProfileModal()}
-    ${renderFriendsPanel()}
-    ${renderNotificationsModal()}
-    ${renderStreakModal()}
-    ${renderWagerModal()}
-    ${renderCourtModal()}
-  `;
+  if (isFirstRender) {
+    appElement.innerHTML = `
+      <main class="app active">
+        <div class="container">
+          ${renderHeader()}
+          ${renderTabs()}
+          <button class="fab" id="createBetBtn" title="Create Bet">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+      </main>
+    `;
+    
+    attachHeaderListeners();
+    attachTabsListeners(appElement, onTabChange);
+    
+    document.getElementById('createBetBtn').onclick = () => lazyModal('bet', () => openBetModal(null, loadCurrentTab));
+    
+    loadCurrentTab().finally(() => {
+      const status = document.getElementById('appLoadingStatus');
+      if (status) status.textContent = 'Almost there...';
+      const barFill = document.getElementById('appLoadingBarFill');
+      if (barFill) barFill.style.width = '100%';
+      setTimeout(() => {
+        const overlay = document.getElementById('appLoadingOverlay');
+        if (overlay) overlay.remove();
+      }, 400);
+    });
+    
+    setupSubscriptions();
+    isFirstRender = false;
+  }
+}
+
+function updateTabContent(tab, bets, context) {
+  const container = document.getElementById(`${tab}Content`);
+  if (!container) return;
   
-  attachHeaderListeners();
-  attachTabsListeners(appElement, onTabChange);
-  attachBetModalListeners();
-  attachWinnerModalListeners();
-  attachHistoryModalListeners();
-  attachAdminModalListeners();
-  attachProfileModalListeners();
-  attachFriendsPanelListeners();
-  attachNotificationsModalListeners();
-  attachStreakModalListeners();
-  attachWagerModalListeners();
-  attachCourtModalListeners();
+  if (bets.length === 0) {
+    const icon = tab === 'feed' ? 'bet' : tab === 'mybets' ? 'shield' : 'edit';
+    const title = tab === 'feed' ? 'No bets yet' : tab === 'mybets' ? 'No active bets' : 'No drafts';
+    const desc = tab === 'feed' ? 'Create the first bet and challenge your friends!' : tab === 'mybets' ? 'Join a bet from the feed to get started!' : 'Save a bet as draft to edit it later!';
+    container.innerHTML = renderEmptyState(icon, title, desc);
+  } else {
+    container.innerHTML = bets.map(bet => renderBetCard(bet, context)).join('');
+  }
   
-  document.getElementById('createBetBtn').onclick = () => openBetModal(null, loadCurrentTab);
-  
-  loadCurrentTab().finally(() => {
-    const status = document.getElementById('appLoadingStatus');
-    if (status) status.textContent = 'Almost there...';
-    const barFill = document.getElementById('appLoadingBarFill');
-    if (barFill) barFill.style.width = '100%';
-    setTimeout(() => {
-      const overlay = document.getElementById('appLoadingOverlay');
-      if (overlay) overlay.remove();
-    }, 400);
-  });
-  
-  setupSubscriptions();
+  attachBetCardListeners();
+}
+
+async function lazyModal(name, action) {
+  if (!modalRegistry[name]) {
+    switch (name) {
+      case 'bet': {
+        const { renderBetModal, openBetModal, attachBetModalListeners } = await import('./components/bet-modal.js');
+        document.body.insertAdjacentHTML('beforeend', renderBetModal());
+        attachBetModalListeners();
+        modalRegistry[name] = { openBetModal };
+        break;
+      }
+      case 'winner': {
+        const { renderWinnerModal, openWinnerModal, attachWinnerModalListeners } = await import('./components/winner-modal.js');
+        document.body.insertAdjacentHTML('beforeend', renderWinnerModal());
+        attachWinnerModalListeners();
+        modalRegistry[name] = { openWinnerModal };
+        break;
+      }
+      case 'history': {
+        const { renderHistoryModal, openHistoryModal, attachHistoryModalListeners } = await import('./components/history-modal.js');
+        document.body.insertAdjacentHTML('beforeend', renderHistoryModal());
+        attachHistoryModalListeners();
+        modalRegistry[name] = { openHistoryModal };
+        break;
+      }
+      case 'admin': {
+        const { renderAdminModal, openAdminModal, attachAdminModalListeners } = await import('./components/admin-modal.js');
+        document.body.insertAdjacentHTML('beforeend', renderAdminModal());
+        attachAdminModalListeners();
+        modalRegistry[name] = { openAdminModal };
+        break;
+      }
+      case 'profile': {
+        const { renderProfileModal, openProfileModal, attachProfileModalListeners } = await import('./components/profile-modal.js');
+        document.body.insertAdjacentHTML('beforeend', renderProfileModal());
+        attachProfileModalListeners();
+        modalRegistry[name] = { openProfileModal };
+        break;
+      }
+      case 'friends': {
+        const { renderFriendsPanel, openFriendsPanel, attachFriendsPanelListeners } = await import('./components/friends-panel.js');
+        document.body.insertAdjacentHTML('beforeend', renderFriendsPanel());
+        attachFriendsPanelListeners();
+        modalRegistry[name] = { openFriendsPanel };
+        break;
+      }
+      case 'notifications': {
+        const { renderNotificationsModal, openNotificationsModal, attachNotificationsModalListeners } = await import('./components/notification-badge.js');
+        document.body.insertAdjacentHTML('beforeend', renderNotificationsModal());
+        attachNotificationsModalListeners();
+        modalRegistry[name] = { openNotificationsModal };
+        break;
+      }
+      case 'streak': {
+        const { renderStreakModal, openStreakModal, attachStreakModalListeners } = await import('./components/streak-modal.js');
+        document.body.insertAdjacentHTML('beforeend', renderStreakModal());
+        attachStreakModalListeners();
+        modalRegistry[name] = { openStreakModal };
+        break;
+      }
+      case 'wager': {
+        const { renderWagerModal, openWagerModal, attachWagerModalListeners } = await import('./components/wager-modal.js');
+        document.body.insertAdjacentHTML('beforeend', renderWagerModal());
+        attachWagerModalListeners();
+        modalRegistry[name] = { openWagerModal };
+        break;
+      }
+      case 'court': {
+        const { renderCourtModal, openCourtModal, attachCourtModalListeners } = await import('./components/court-modal.js');
+        document.body.insertAdjacentHTML('beforeend', renderCourtModal());
+        attachCourtModalListeners();
+        modalRegistry[name] = { openCourtModal };
+        break;
+      }
+    }
+  }
+  return action();
 }
 
 function setupSubscriptions() {
@@ -128,7 +200,6 @@ function setupSubscriptions() {
   if (!user) return;
   
   if (!has('bets_changes')) {
-    loadStreakData();
     const channel = subscribeToBets(async () => {
       await loadCurrentTab();
     });
@@ -182,16 +253,19 @@ async function loadFeed() {
   
   try {
     const bets = await getBets(user.id, 'all');
-    await autoExpireBets(bets);
-    const bets2 = await getBets(user.id, 'all');
+    const expiredIds = await autoExpireBets(bets);
     
-    if (bets2.length === 0) {
-      container.innerHTML = renderEmptyState('bet', 'No bets yet', 'Create the first bet and challenge your friends!');
+    if (expiredIds.size > 0) {
+      const updatedBets = bets.map(bet => {
+        if (expiredIds.has(bet.id)) {
+          return { ...bet, status: 'refunded' };
+        }
+        return bet;
+      });
+      updateTabContent('feed', updatedBets, 'feed');
     } else {
-      container.innerHTML = bets2.map(bet => renderBetCard(bet, 'feed')).join('');
+      updateTabContent('feed', bets, 'feed');
     }
-    
-    attachBetCardListeners();
   } catch (error) {
     container.innerHTML = '<div class="error">Failed to load bets</div>';
   }
@@ -205,14 +279,19 @@ async function loadMyBets() {
   
   try {
     const bets = await getBets(user.id, 'mybets');
+    const expiredIds = await autoExpireBets(bets);
     
-    if (bets.length === 0) {
-      container.innerHTML = renderEmptyState('shield', 'No active bets', 'Join a bet from the feed to get started!');
+    if (expiredIds.size > 0) {
+      const updatedBets = bets.map(bet => {
+        if (expiredIds.has(bet.id)) {
+          return { ...bet, status: 'refunded' };
+        }
+        return bet;
+      });
+      updateTabContent('mybets', updatedBets, 'mybets');
     } else {
-      container.innerHTML = bets.map(bet => renderBetCard(bet, 'mybets')).join('');
+      updateTabContent('mybets', bets, 'mybets');
     }
-    
-    attachBetCardListeners();
   } catch (error) {
     container.innerHTML = '<div class="error">Failed to load bets</div>';
   }
@@ -226,14 +305,7 @@ async function loadDrafts() {
   
   try {
     const drafts = await getDrafts(user.id);
-    
-    if (drafts.length === 0) {
-      container.innerHTML = renderEmptyState('edit', 'No drafts', 'Save a bet as draft to edit it later!');
-    } else {
-      container.innerHTML = drafts.map(bet => renderBetCard(bet, 'drafts')).join('');
-    }
-    
-    attachBetCardListeners();
+    updateTabContent('drafts', drafts, 'drafts');
   } catch (error) {
     container.innerHTML = '<div class="error">Failed to load drafts</div>';
   }
@@ -245,7 +317,10 @@ function attachBetCardListeners() {
   document.querySelectorAll('[data-action="edit"]').forEach(btn => {
     btn.onclick = () => {
       const betId = btn.dataset.betId;
-      openBetModal(betId, loadCurrentTab);
+      lazyModal('bet', () => {
+        const { openBetModal } = modalRegistry.bet;
+        openBetModal(betId, loadCurrentTab);
+      });
     };
   });
   
@@ -270,6 +345,8 @@ function attachBetCardListeners() {
       if (!confirm('Delete this bet?')) return;
       try {
         await deleteBet(betId);
+        invalidateCache('friends');
+        invalidateCache('friendIds');
         loadCurrentTab();
       } catch (error) {
         alert(error.message || 'Failed to delete bet');
@@ -283,21 +360,30 @@ function attachBetCardListeners() {
       const side = btn.dataset.action === 'bet-for' ? 'for' : 'against';
       const betCard = btn.closest('.bet-card');
       const betTitle = betCard?.querySelector('.bet-title')?.textContent || '';
-      openWagerModal(betId, side, betTitle, loadCurrentTab);
+      lazyModal('wager', () => {
+        const { openWagerModal } = modalRegistry.wager;
+        openWagerModal(betId, side, betTitle, loadCurrentTab);
+      });
     };
   });
   
   document.querySelectorAll('[data-action="select-winner"]').forEach(btn => {
     btn.onclick = () => {
       const betId = btn.dataset.betId;
-      openWinnerModal(betId, loadCurrentTab);
+      lazyModal('winner', () => {
+        const { openWinnerModal } = modalRegistry.winner;
+        openWinnerModal(betId, loadCurrentTab);
+      });
     };
   });
 
   document.querySelectorAll('[data-action="open-court"]').forEach(btn => {
     btn.onclick = () => {
       const betId = btn.dataset.betId;
-      openCourtModal(betId, loadCurrentTab);
+      lazyModal('court', () => {
+        const { openCourtModal } = modalRegistry.court;
+        openCourtModal(betId, loadCurrentTab);
+      });
     };
   });
   
@@ -327,16 +413,37 @@ function attachBetCardListeners() {
 function attachHeaderListeners() {
   const { user, profile } = getState();
   
-  document.getElementById('headerAvatar').onclick = () => openProfileModal(user.id);
-  document.querySelector('.user-info h3').onclick = () => openProfileModal(user.id);
+  document.getElementById('headerAvatar').onclick = () => lazyModal('profile', () => {
+    const { openProfileModal } = modalRegistry.profile;
+    openProfileModal(user.id);
+  });
+  document.querySelector('.user-info h3').onclick = () => lazyModal('profile', () => {
+    const { openProfileModal } = modalRegistry.profile;
+    openProfileModal(user.id);
+  });
   
-  document.getElementById('streakBtn').onclick = () => openStreakModal();
-  document.getElementById('notificationsBtn').onclick = () => openNotificationsModal();
-  document.getElementById('friendsBtn').onclick = () => openFriendsPanel();
-  document.getElementById('historyBtn').onclick = () => openHistoryModal();
+  document.getElementById('streakBtn').onclick = () => lazyModal('streak', () => {
+    const { openStreakModal } = modalRegistry.streak;
+    openStreakModal();
+  });
+  document.getElementById('notificationsBtn').onclick = () => lazyModal('notifications', () => {
+    const { openNotificationsModal } = modalRegistry.notifications;
+    openNotificationsModal();
+  });
+  document.getElementById('friendsBtn').onclick = () => lazyModal('friends', () => {
+    const { openFriendsPanel } = modalRegistry.friends;
+    openFriendsPanel();
+  });
+  document.getElementById('historyBtn').onclick = () => lazyModal('history', () => {
+    const { openHistoryModal } = modalRegistry.history;
+    openHistoryModal();
+  });
   
   if (profile?.is_admin) {
-    document.getElementById('adminBtn').onclick = () => openAdminModal();
+    document.getElementById('adminBtn').onclick = () => lazyModal('admin', () => {
+      const { openAdminModal } = modalRegistry.admin;
+      openAdminModal();
+    });
   }
   
   document.getElementById('logoutBtn').onclick = async () => {

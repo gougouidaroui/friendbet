@@ -36,32 +36,44 @@ export async function loadProfile(user) {
     return null;
   }
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  const { data: bonusResult, error: bonusError } = await supabase.rpc('process_daily_bonus');
 
-  if (error && error.code === 'PGRST116') {
-    return null;
-  }
-
-  if (error) throw error;
-
-  try {
-    await supabase.rpc('process_daily_bonus');
-    
-    const { data: updatedProfile } = await supabase
+  if (bonusError) {
+    console.error('Failed to process daily bonus:', bonusError);
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single();
-    
-    return updatedProfile;
-  } catch (e) {
-    console.log('Daily bonus may already be processed');
+
+    if (error && error.code === 'PGRST116') {
+      return null;
+    }
+    if (error) throw error;
     return profile;
   }
+
+  if (!bonusResult || bonusResult.length === 0) {
+    return null;
+  }
+
+  const row = bonusResult[0];
+  return {
+    id: row.id,
+    username: row.username,
+    points: row.points,
+    is_admin: row.is_admin,
+    last_login: row.last_login,
+    login_streak: row.login_streak,
+    created_at: row.created_at,
+    rescues_remaining: row.rescues_remaining,
+    rescues_reset_date: row.rescues_reset_date,
+    penguin_stage: row.penguin_stage,
+    win_streak: row.win_streak,
+    best_win_streak: row.best_win_streak,
+    trophy_level: row.trophy_level,
+    streak_in_danger: row.streak_in_danger,
+  };
 }
 
 export async function loadProfileWithStreak(user) {

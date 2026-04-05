@@ -1,7 +1,8 @@
 import './index.css';
 import { initApp } from './app.js';
 import { getCurrentUser, loadProfile } from './services/auth.js';
-import { updateUser, setLoading } from './lib/store.js';
+import { getStreakData } from './services/streaks.js';
+import { updateUser, setLoading, updateStreak } from './lib/store.js';
 
 const app = document.getElementById('app');
 
@@ -34,12 +35,37 @@ async function start() {
   if (session?.user) {
     setLoadingStatus('Signing in...');
     setProgress(30);
+    
     try {
-      const profile = await loadProfile(session.user);
-      updateUser(session.user, profile);
+      const [profile, streakRaw] = await Promise.allSettled([
+        loadProfile(session.user),
+        getStreakData(),
+      ]);
+      
+      if (profile.status === 'fulfilled') {
+        updateUser(session.user, profile.value);
+      } else {
+        console.error('Failed to load profile:', profile.reason);
+        updateUser(session.user, null);
+      }
+      
+      if (streakRaw.status === 'fulfilled' && streakRaw.value) {
+        const sr = streakRaw.value;
+        updateStreak({
+          login_streak: sr.out_login_streak ?? sr.login_streak ?? 0,
+          penguin_stage: sr.out_penguin_stage ?? sr.penguin_stage ?? 0,
+          win_streak: sr.out_win_streak ?? sr.win_streak ?? 0,
+          best_win_streak: sr.out_best_win_streak ?? sr.best_win_streak ?? 0,
+          trophy_level: sr.out_trophy_level ?? sr.trophy_level ?? 0,
+          rescues_remaining: sr.out_rescues_remaining ?? sr.rescues_remaining ?? 0,
+          streak_in_danger: sr.out_streak_in_danger ?? sr.streak_in_danger ?? false,
+          days_to_next_stage: sr.out_days_to_next_stage ?? sr.days_to_next_stage ?? 0,
+        });
+      }
+      
       setProgress(50);
     } catch (error) {
-      console.error('Failed to load profile:', error);
+      console.error('Failed to initialize:', error);
       updateUser(session.user, null);
     }
   }
