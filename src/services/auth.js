@@ -59,20 +59,20 @@ export async function loadProfile(user) {
 
   const row = bonusResult[0];
   return {
-    id: row.id,
-    username: row.username,
-    points: row.points,
-    is_admin: row.is_admin,
-    last_login: row.last_login,
-    login_streak: row.login_streak,
-    created_at: row.created_at,
-    rescues_remaining: row.rescues_remaining,
-    rescues_reset_date: row.rescues_reset_date,
-    penguin_stage: row.penguin_stage,
-    win_streak: row.win_streak,
-    best_win_streak: row.best_win_streak,
-    trophy_level: row.trophy_level,
-    streak_in_danger: row.streak_in_danger,
+    id: row.out_id,
+    username: row.out_username,
+    points: row.out_points,
+    is_admin: row.out_is_admin,
+    last_login: row.out_last_login,
+    login_streak: row.out_login_streak,
+    created_at: row.out_created_at,
+    rescues_remaining: row.out_rescues_remaining,
+    rescues_reset_date: row.out_rescues_reset_date,
+    penguin_stage: row.out_penguin_stage,
+    win_streak: row.out_win_streak,
+    best_win_streak: row.out_best_win_streak,
+    trophy_level: row.out_trophy_level,
+    streak_in_danger: row.out_streak_in_danger,
   };
 }
 

@@ -1,13 +1,11 @@
 -- ============================================================================
--- PERFORMANCE: Return data from RPCs to eliminate redundant re-fetches
+-- FIX: Rename output columns to avoid ambiguity with table columns
 -- ============================================================================
--- 1. process_daily_bonus() now returns the full updated profile row
---    Eliminates the 2nd SELECT in loadProfile()
--- 2. expire_resolution() now returns the updated bet row
---    Eliminates the re-fetch after auto-expiry
+-- The original RETURNS TABLE used bare column names (id, username, points, etc.)
+-- which conflicted with the profiles table columns in RETURN QUERY SELECT.
+-- Renaming to out_* prefix resolves the "column reference is ambiguous" error.
 -- ============================================================================
 
--- 1. process_daily_bonus() — return full profile
 DROP FUNCTION IF EXISTS public.process_daily_bonus();
 CREATE FUNCTION public.process_daily_bonus()
   RETURNS TABLE(
@@ -106,44 +104,6 @@ BEGIN
     p.streak_in_danger,
     v_points_earned, v_is_in_danger, v_was_rescued
   FROM public.profiles p WHERE p.id = v_user_id;
-END;
-$function$
-;
-
--- 2. expire_resolution() — return the updated bet row
-DROP FUNCTION IF EXISTS public.expire_resolution(uuid);
-CREATE FUNCTION public.expire_resolution(p_bet_id uuid)
-  RETURNS SETOF public.bets
-  LANGUAGE plpgsql
-  SECURITY DEFINER
-  SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_bet RECORD;
-  v_wager RECORD;
-BEGIN
-  SELECT * INTO v_bet FROM public.bets WHERE id = p_bet_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Bet not found';
-  END IF;
-
-  IF v_bet.status != 'published' THEN
-    RAISE EXCEPTION 'Bet is not in published status';
-  END IF;
-
-  IF v_bet.end_time > NOW() THEN
-    RAISE EXCEPTION 'Bet has not expired yet';
-  END IF;
-
-  UPDATE public.bets SET status = 'refunded', resolved_at = NOW() WHERE id = p_bet_id;
-
-  FOR v_wager IN SELECT * FROM public.wagers WHERE bet_id = p_bet_id LOOP
-    UPDATE public.profiles SET points = points + v_wager.amount WHERE id = v_wager.user_id;
-    INSERT INTO internal.transactions (user_id, type, amount, bet_id, created_by, reason)
-      VALUES (v_wager.user_id, 'wager_refund', v_wager.amount, p_bet_id, v_bet.creator_id, 'Bet expired - no resolution proposed');
-  END LOOP;
-
-  RETURN QUERY SELECT * FROM public.bets WHERE id = p_bet_id;
 END;
 $function$
 ;
