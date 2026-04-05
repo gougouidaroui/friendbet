@@ -17,6 +17,9 @@ export function renderBetCard(bet, context = 'feed') {
   if (bet.status === 'draft') {
     statusClass = 'status-draft';
     statusText = 'Draft';
+  } else if (bet.status === 'in_resolution') {
+    statusClass = 'status-resolution';
+    statusText = 'In Court';
   } else if (isClosed && bet.status === 'published') {
     statusClass = 'status-closed';
     statusText = 'Closed';
@@ -26,6 +29,9 @@ export function renderBetCard(bet, context = 'feed') {
   } else if (bet.status === 'resolved') {
     statusClass = 'status-resolved';
     statusText = bet.winner === 'for' ? 'For Won' : 'Against Won';
+  } else if (bet.status === 'refunded') {
+    statusClass = 'status-refunded';
+    statusText = 'Refunded';
   }
   
   let actions = '';
@@ -54,7 +60,14 @@ export function renderBetCard(bet, context = 'feed') {
       You bet ${userWager?.side}
     </span>`;
   } else if (bet.status === 'published' && isClosed && isCreator) {
-    actions = `<button class="btn btn-primary" data-action="select-winner" data-bet-id="${bet.id}">Select Winner</button>`;
+    actions = `<button class="btn btn-primary" data-action="open-court" data-bet-id="${bet.id}">Resolve Bet</button>`;
+  } else if (bet.status === 'published' && isClosed && userHasWagered) {
+    actions = `<button class="btn btn-primary" data-action="open-court" data-bet-id="${bet.id}">Resolve Bet</button>`;
+  } else if (bet.status === 'in_resolution') {
+    actions = `<button class="btn btn-court" data-action="open-court" data-bet-id="${bet.id}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      View Court
+    </button>`;
   }
   
   const timeLeft = getTimeRemaining(endTime);
@@ -81,7 +94,7 @@ export function renderBetCard(bet, context = 'feed') {
         ${bet.visibility && bet.visibility !== 'public' ? `
           <span class="visibility-badge ${bet.visibility}">${bet.visibility}</span>
         ` : ''}
-        ${bet.status === 'resolved' ? `
+        ${bet.status === 'resolved' || bet.status === 'refunded' ? `
           <div class="bet-meta-item" style="color: var(--accent-tertiary);">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
             Winner: ${bet.winner === 'for' ? 'For' : 'Against'}

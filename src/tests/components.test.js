@@ -170,7 +170,7 @@ describe('BetCard Component', () => {
 
       const html = renderBetCard(bet, 'feed');
 
-      expect(html).toContain('data-action="select-winner"');
+      expect(html).toContain('data-action="open-court"');
     });
 
     it('should show visibility badge for non-public bets', () => {

@@ -3067,3 +3067,225 @@ body::before {
     font-size: 20px;
   }
 }
+
+/* ─── Court Modal ─── */
+
+.court-modal-content {
+  max-width: 480px;
+}
+
+.court-phase {
+  text-align: center;
+}
+
+.court-icon {
+  margin: 0 auto var(--spacing-4);
+  color: var(--accent);
+}
+
+.court-icon.proposer {
+  color: var(--accent-tertiary);
+}
+
+.court-icon.challenger {
+  color: var(--accent-secondary);
+}
+
+.court-icon.refund {
+  color: var(--foreground-muted);
+}
+
+.court-icon.for-win {
+  color: var(--accent-tertiary);
+}
+
+.court-icon.against-win {
+  color: var(--accent-secondary);
+}
+
+.court-description {
+  font-size: 14px;
+  color: var(--foreground-secondary);
+  margin-bottom: var(--spacing-6);
+  line-height: 1.6;
+}
+
+.court-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
+}
+
+.court-note {
+  font-size: 12px;
+  color: var(--foreground-subtle);
+  font-style: italic;
+  margin-top: var(--spacing-2);
+}
+
+.court-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-6) 0;
+  color: var(--foreground-muted);
+}
+
+.court-waiting .spinner-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.court-progress {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-4);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  margin-bottom: var(--spacing-4);
+}
+
+.progress-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.progress-label {
+  font-size: 11px;
+  color: var(--foreground-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.progress-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.court-participants {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-4);
+}
+
+.participant {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.participant.committed {
+  border-color: var(--accent-border);
+  background: var(--accent-light);
+}
+
+.participant.revealed {
+  border-color: var(--accent-tertiary-border);
+  background: var(--accent-tertiary-light);
+}
+
+.participant-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.participant-status {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--foreground-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.participant.committed .participant-status {
+  color: var(--accent);
+}
+
+.participant.revealed .participant-status {
+  color: var(--accent-tertiary);
+}
+
+.court-vote-summary {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-4);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  margin-bottom: var(--spacing-4);
+}
+
+.vote-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.vote-label {
+  font-size: 11px;
+  color: var(--foreground-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.vote-number {
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.vote-count.for .vote-number {
+  color: var(--accent-tertiary);
+}
+
+.vote-count.against .vote-number {
+  color: var(--accent-secondary);
+}
+
+/* ─── New Bet Statuses ─── */
+
+.status-resolution {
+  background: var(--accent-warning-light);
+  color: var(--accent-warning);
+  border: 1px solid var(--accent-warning-border);
+  animation: courtPulse 2s infinite;
+}
+
+@keyframes courtPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.status-refunded {
+  background: var(--surface);
+  color: var(--foreground-muted);
+  border: 1px solid var(--border-strong);
+}
+
+.btn-court {
+  background: var(--accent-warning);
+  color: #fff;
+}
+
+.btn-court:hover:not(:disabled) {
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+}

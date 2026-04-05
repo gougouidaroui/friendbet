@@ -85,7 +85,7 @@ export async function getBets(userId, filter = 'all') {
         amount
       )
     `)
-    .eq('status', 'published')
+    .in('status', ['published', 'in_resolution', 'resolved', 'refunded'])
     .or(`visibility.eq.public,creator_id.eq.${userId}`);
   
   const { data, error } = await query

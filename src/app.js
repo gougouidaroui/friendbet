@@ -18,6 +18,7 @@ import { renderFriendsPanel, openFriendsPanel, attachFriendsPanelListeners } fro
 import { renderNotificationsModal, openNotificationsModal, attachNotificationsModalListeners } from './components/notification-badge.js';
 import { renderStreakModal, openStreakModal, attachStreakModalListeners } from './components/streak-modal.js';
 import { renderWagerModal, openWagerModal, attachWagerModalListeners } from './components/wager-modal.js';
+import { renderCourtModal, openCourtModal, attachCourtModalListeners } from './components/court-modal.js';
 
 let appElement = null;
 
@@ -90,6 +91,7 @@ function render() {
     ${renderNotificationsModal()}
     ${renderStreakModal()}
     ${renderWagerModal()}
+    ${renderCourtModal()}
   `;
   
   attachHeaderListeners();
@@ -103,6 +105,7 @@ function render() {
   attachNotificationsModalListeners();
   attachStreakModalListeners();
   attachWagerModalListeners();
+  attachCourtModalListeners();
   
   document.getElementById('createBetBtn').onclick = () => openBetModal(null, loadCurrentTab);
   
@@ -286,6 +289,13 @@ function attachBetCardListeners() {
     btn.onclick = () => {
       const betId = btn.dataset.betId;
       openWinnerModal(betId, loadCurrentTab);
+    };
+  });
+
+  document.querySelectorAll('[data-action="open-court"]').forEach(btn => {
+    btn.onclick = () => {
+      const betId = btn.dataset.betId;
+      openCourtModal(betId, loadCurrentTab);
     };
   });
   

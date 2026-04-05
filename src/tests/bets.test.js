@@ -215,6 +215,7 @@ describe('Bets Service', () => {
       const queryMock = {
         eq: vi.fn().mockReturnThis(),
         or: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ data: mockBets, error: null })
       };
       mockSupabase.from.mockReturnValue({
@@ -224,7 +225,7 @@ describe('Bets Service', () => {
       const result = await bets.getBets('user-123', 'feed');
 
       expect(mockSupabase.from).toHaveBeenCalledWith('bets');
-      expect(queryMock.eq).toHaveBeenCalledWith('status', 'published');
+      expect(queryMock.in).toHaveBeenCalledWith('status', ['published', 'in_resolution', 'resolved', 'refunded']);
       expect(result).toHaveLength(2);
       expect(result[0].title).toBe('Public Bet');
       expect(result[1].title).toBe('My Bet');
@@ -255,6 +256,7 @@ describe('Bets Service', () => {
       const queryMock = {
         eq: vi.fn().mockReturnThis(),
         or: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ data: mockBets, error: null })
       };
       mockSupabase.from.mockReturnValue({
