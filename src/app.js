@@ -44,6 +44,7 @@ export function initApp(element) {
       removeAll();
       clearCache();
       modalRegistry = {};
+      isFirstRender = true;
       updateUser(null, null);
     }
   });
