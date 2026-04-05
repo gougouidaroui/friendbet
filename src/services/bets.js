@@ -191,6 +191,30 @@ export async function getBetWithUsernames(betId) {
   };
 }
 
+export async function expireResolution(betId) {
+  const { error } = await supabase.rpc('expire_resolution', {
+    p_bet_id: betId
+  });
+  if (error) throw error;
+}
+
+export async function autoExpireBets(bets) {
+  const expired = bets.filter(bet => {
+    if (bet.status !== 'published') return false;
+    const endTime = new Date(bet.end_time);
+    const hoursSinceClose = (Date.now() - endTime.getTime()) / (1000 * 60 * 60);
+    return hoursSinceClose >= 24;
+  });
+
+  for (const bet of expired) {
+    try {
+      await expireResolution(bet.id);
+    } catch (e) {
+      // Already expired or another error, skip silently
+    }
+  }
+}
+
 export function subscribeToBets(callback) {
   return supabase
     .channel('bets_changes')

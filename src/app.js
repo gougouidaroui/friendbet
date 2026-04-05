@@ -1,7 +1,7 @@
 import { getState, subscribe, updateUser, setLoading, updateStreak, updateStateSilent } from './lib/store.js';
 import { removeAll, has, registerChannel } from './lib/subscriptions.js';
 import { onAuthStateChange, loadProfile } from './services/auth.js';
-import { getBets, getDrafts, deleteBet, subscribeToBets, getBet, placeWager as placeWagerService } from './services/bets.js';
+import { getBets, getDrafts, deleteBet, subscribeToBets, getBet, placeWager as placeWagerService, autoExpireBets } from './services/bets.js';
 import { signOut } from './services/auth.js';
 import { getStreakData, subscribeToStreakChanges } from './services/streaks.js';
 
@@ -182,11 +182,13 @@ async function loadFeed() {
   
   try {
     const bets = await getBets(user.id, 'all');
+    await autoExpireBets(bets);
+    const bets2 = await getBets(user.id, 'all');
     
-    if (bets.length === 0) {
+    if (bets2.length === 0) {
       container.innerHTML = renderEmptyState('bet', 'No bets yet', 'Create the first bet and challenge your friends!');
     } else {
-      container.innerHTML = bets.map(bet => renderBetCard(bet, 'feed')).join('');
+      container.innerHTML = bets2.map(bet => renderBetCard(bet, 'feed')).join('');
     }
     
     attachBetCardListeners();
@@ -203,11 +205,13 @@ async function loadMyBets() {
   
   try {
     const bets = await getBets(user.id, 'mybets');
+    await autoExpireBets(bets);
+    const bets2 = await getBets(user.id, 'mybets');
     
-    if (bets.length === 0) {
+    if (bets2.length === 0) {
       container.innerHTML = renderEmptyState('shield', 'No active bets', 'Join a bet from the feed to get started!');
     } else {
-      container.innerHTML = bets.map(bet => renderBetCard(bet, 'mybets')).join('');
+      container.innerHTML = bets2.map(bet => renderBetCard(bet, 'mybets')).join('');
     }
     
     attachBetCardListeners();
