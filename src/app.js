@@ -10,6 +10,7 @@ import { renderAuth, attachAuthListeners } from './components/auth.js';
 import { renderHeader, updateHeader } from './components/header.js';
 import { renderTabs, attachTabsListeners } from './components/tabs.js';
 import { renderBetCard, renderWagers, renderEmptyState } from './components/bet-card.js';
+import { openBetModal } from './components/bet-modal.js';
 
 let appElement = null;
 let isFirstRender = true;
